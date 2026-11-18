@@ -1,0 +1,468 @@
+/* TaskQuest — NES-style theme
+ * Limited 8-bit palette, flat black background, white bordered windows,
+ * one pixel font, no glows or gradients. */
+/* The pixel font ships with the app (fonts/, SIL OFL license), so it works offline. */
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-display: block;
+}
+
+:root {
+  --bg: #000000;
+  --text: #fcfcfc;
+  --muted: #bcbcbc;
+  --dim: #7c7c7c;
+  --dark: #3c3c3c;
+  --easy: #58d854;
+  --medium: #f8b800;
+  --hard: #f83800;
+  --px: 'Press Start 2P', 'Courier New', monospace;
+  --hero: #fcfcfc; /* the hero sprite's color; app.js changes it once unlocked at LV 100 */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--px);
+  font-size: 10px;
+  line-height: 1.6;
+  text-transform: uppercase;
+  overflow: hidden;
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
+}
+
+.c-easy { color: var(--easy); }
+.c-hard { color: var(--hard); }
+.lbl { font-size: 10px; color: var(--muted); }
+
+/* NES "window": white border, slightly rounded, black fill */
+.window, .hud, .hero-card, .quest, .modal, .toast, .empty {
+  background: #000;
+  border: 4px solid var(--text);
+  border-radius: 6px;
+}
+
+/* The whole app is one small widget, like a pocket pet: a fixed 360×480 (3:4) screen,
+ * centered in the window. Every overlay (title, windows, game over, toasts) is pinned to
+ * that same screen, never to the full window. */
+:root { --screen-w: 360px; --screen-h: 480px; }
+body { display: grid; place-items: center; }
+#app {
+  width: var(--screen-w); height: var(--screen-h); flex: none;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 10px;
+  gap: 8px;
+  overflow: hidden;
+}
+#modal-root, .title-screen, .gameover {
+  position: fixed; inset: auto; left: 50%; top: 50%;
+  width: var(--screen-w); height: var(--screen-h); transform: translate(-50%, -50%);
+}
+#app.shake { animation: shake .3s steps(4); }
+
+/* ---------- HUD (the pet screen) ---------- */
+/* Fixed height, so the hero card is a true square the same height as the HUD. */
+.top { display: flex; gap: 8px; height: 104px; min-width: 0; }
+.hero-card { flex: none; width: 104px; height: 104px; padding: 8px; color: var(--hero); }
+.hero-card svg { width: 100%; height: 100%; display: block; }
+.hud {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 8px 10px;
+}
+.hud-head { display: flex; justify-content: space-between; align-items: baseline; }
+.logo { font-size: 10px; white-space: nowrap; }
+
+.lv { color: var(--text); }
+.lv b { font-weight: normal; }
+.xp-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 9px; margin-bottom: 6px; }
+.bar { height: 10px; background: #000; border: 2px solid var(--text); position: relative; overflow: hidden; }
+.bar > div { height: 100%; width: 0%; background: var(--text); transition: width .4s steps(10); }
+.bar::after {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 8px, #000 8px 10px);
+}
+
+.hud-hp { display: flex; align-items: center; gap: 10px; }
+.hearts { display: flex; gap: 5px; align-items: center; }
+.heart { width: 17.5px; height: 15px; display: block; }
+.heart.full .px { fill: var(--hard); }
+.heart.full .hl { fill: var(--text); }
+.heart.empty .px { fill: var(--dark); }
+
+.hud-stats { gap: 18px; }
+.hud-stats div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hud-stats b { font-size: 12px; font-weight: normal; }
+
+.hud-clock { font-size: 9px; color: var(--muted); }
+
+/* ---------- QUEST LIST ---------- */
+.board { min-height: 0; position: relative; }
+.quest-list {
+  list-style: none; display: flex; flex-direction: column; gap: 8px;
+  height: 100%; overflow-y: auto; padding: 0 2px 8px 16px;
+  scrollbar-width: none;
+}
+.quest-list::-webkit-scrollbar { display: none; }
+.quest {
+  --c: var(--easy);
+  position: relative;
+  display: block;
+  padding: 10px 12px;
+  border-color: var(--dark);
+  cursor: pointer;
+}
+.d-easy { --c: var(--easy); }
+.d-medium { --c: var(--medium); }
+.d-hard { --c: var(--hard); }
+.quest.selected { border-color: var(--text); }
+.q-cursor {
+  position: absolute; left: -18px; top: 50%; margin-top: -6px;
+  font-size: 10px; color: var(--text); opacity: 0;
+}
+.selected .q-cursor { opacity: 1; }
+.q-badge { font-size: 8px; color: var(--c); margin-bottom: 6px; }
+.q-main { min-width: 0; }
+.q-title { font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; color: var(--text); }
+.q-meta { color: var(--dim); font-size: 7px; margin-top: 6px; }
+.q-meta b { color: var(--text); font-weight: normal; }
+.q-time { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--text); }
+.q-clock { width: 10px; height: 10px; flex: none; }
+.q-timer { font-size: 8px; white-space: nowrap; flex: none; min-width: 11ch; }
+.q-fuse { flex: 1; height: 6px; border: 2px solid var(--dark); }
+.selected .q-fuse { border-color: var(--dim); }
+.q-fuse span { display: block; height: 100%; background: var(--text); transition: width 1s steps(4); }
+/* Urgency colors the clock and the time; the bar stays white. */
+.quest.urgent .q-time { color: var(--medium); }
+.quest.critical .q-time { color: var(--hard); }
+
+.s-done .q-title, .s-done:not(.selected) .q-title { text-decoration: line-through; color: var(--dim); }
+.s-failed .q-title { color: var(--dim); }
+.q-stamp { font-size: 11px; padding: 6px 10px; border: 3px solid currentColor; }
+.q-stamp.clear { color: var(--easy); }
+.q-stamp.fail { color: var(--hard); }
+.quest.clearing { animation: clearing .5s steps(5) forwards; }
+
+.empty {
+  text-align: center; padding: 28px 12px; color: var(--muted); font-size: 8px; line-height: 2;
+  border-color: var(--dark); border-style: dashed;
+}
+.empty .big { font-size: 14px; color: var(--text); margin-bottom: 18px; }
+
+/* ---------- BUTTON PROMPTS ---------- */
+.prompts {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px;
+  padding: 2px 0 0; font-size: 7px; color: var(--muted);
+}
+.prompts span { white-space: nowrap; }
+/* The control legend belongs to the main screen only: hide it under any window. */
+body:has(#modal-root:not(:empty)) .prompts { visibility: hidden; }
+kbd {
+  font-family: var(--px); font-size: 9px; display: inline-block; min-width: 24px;
+  padding: 4px 6px; text-align: center; color: #000; background: var(--text);
+  margin-right: 8px; vertical-align: 1px;
+}
+kbd.k-easy { background: var(--easy); }
+kbd.k-hard { background: var(--hard); }
+kbd.k-cyan { background: var(--medium); }
+
+/* ---------- MODALS ---------- */
+#modal-root:empty { display: none; }
+#modal-root {
+  z-index: 50; display: grid; place-items: center;
+  background: rgba(0,0,0,.8);
+}
+.modal {
+  width: 344px; max-height: calc(var(--screen-h) - 16px); overflow-y: auto;
+  padding: 14px 12px; scrollbar-width: none;
+}
+.modal.shake { animation: shake .3s steps(4); }
+.modal-head { margin-bottom: 12px; }
+.modal-kicker { font-size: 7px; color: var(--dim); }
+.modal h2 { font-size: 11px; font-weight: normal; margin-top: 8px; line-height: 1.6; overflow-wrap: anywhere; }
+
+.f-row { padding: 8px 4px 8px 18px; margin-bottom: 2px; position: relative; }
+.f-row::before { content: '▶'; position: absolute; left: 2px; top: 8px; font-size: 8px; visibility: hidden; }
+.f-row.active::before { visibility: visible; }
+/* The buttons light up on their own: no cursor arrow there. */
+.f-row.r-actions::before { display: none; }
+.f-row label { display: block; font-size: 10px; color: var(--dim); margin-bottom: 10px; }
+.f-row.active label { color: var(--text); }
+.f-row label small { font-size: 8px; color: var(--dim); margin-left: 8px; }
+.f-row input {
+  width: 100%; font-family: var(--px); font-size: 13px; color: var(--text);
+  background: #000; border: 3px solid var(--dark); padding: 10px 12px; outline: none;
+  color-scheme: dark;
+}
+.f-row input:focus { border-color: var(--text); }
+.f-row input::placeholder { color: var(--dark); }
+
+.diff-pick, .preset-pick { display: flex; gap: 6px; outline: none; }
+.diff-opt {
+  flex: 1; min-width: 0; text-align: center; font-size: 8px;
+  padding: 8px 2px; color: var(--dark); border: 3px solid var(--dark);
+  cursor: pointer; display: flex; flex-direction: column; gap: 6px; align-items: center;
+}
+.diff-opt .n { font-size: 7px; color: var(--dim); }
+.diff-opt small { font-size: 7px; color: var(--dark); }
+/* The chosen difficulty is white and still once picked; it only gets its color
+ * (and the monster only moves) while the cursor is on this row. The rest stay gray. */
+.diff-opt.on { color: var(--text); border-color: var(--text); }
+.f-row.active .diff-opt.on { color: var(--c); border-color: var(--c); }
+.diff-opt.on small { color: var(--dim); }
+.monster { width: 28px; height: 28px; display: block; margin-bottom: 2px; }
+.monster .f1 { display: none; }
+#modal-root.mf1 .f-row.active .diff-opt.on .monster .f0 { display: none; }
+#modal-root.mf1 .f-row.active .diff-opt.on .monster .f1 { display: inline; }
+.preset-opt { font-size: 9px; padding: 9px 10px; border: 3px solid var(--dark); color: var(--dim); cursor: pointer; }
+.preset-opt.on { border-color: var(--text); color: var(--text); }
+.f-countdown { margin-top: 8px; font-size: 7px; color: var(--muted); min-height: 12px; }
+.f-countdown.bad { color: var(--hard); }
+.f-error { color: var(--hard); font-size: 7px; min-height: 12px; margin: 6px 4px 0 18px; }
+
+
+.confirm-modal { text-align: center; }
+.confirm-modal .modal-kicker { background: none !important; color: var(--hard); }
+.confirm-modal .q-name { font-size: 10px; margin: 12px 0 18px; color: var(--muted); overflow-wrap: anywhere; }
+.choice { display: flex; justify-content: center; gap: 24px; }
+.choice div { font-size: 10px; padding: 6px 4px; color: var(--dim); cursor: pointer; }
+.choice div::before { content: '▶ '; visibility: hidden; }
+.choice div.on { color: var(--text); }
+.choice div.on::before { visibility: visible; }
+
+.help-grid { display: grid; grid-template-columns: auto 1fr; gap: 12px 18px; align-items: center; font-size: 10px; }
+.help-grid .keys { text-align: right; white-space: nowrap; }
+.help-grid h3 { grid-column: 1 / -1; font-size: 10px; font-weight: normal; color: var(--medium); margin-top: 12px; }
+.help-rules { margin-top: 20px; color: var(--muted); font-size: 10px; line-height: 2; }
+.help-rules b { color: var(--text); font-weight: normal; }
+
+/* ---------- GAME OVER / TITLE ---------- */
+.gameover, .title-screen {
+  z-index: 80; display: grid; place-items: center; text-align: center;
+  background: #000;
+}
+.title-screen { z-index: 90; }
+.title-screen { transition: opacity .3s steps(3), visibility 0s linear .3s; }
+.title-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.gameover > div, .title-inner { padding: 0 16px; }
+.title-sub { font-size: 10px; color: var(--dim); }
+.title-logo, .go-title { font-size: 30px; font-weight: normal; margin: 24px 0 36px; }
+.title-logo { color: var(--text); }
+.go-title { color: var(--hard); }
+.press { font-size: 12px; }
+.title-hint { color: var(--dim); margin-top: 34px; font-size: 9px; line-height: 2; }
+/* Control legend pinned to the bottom of the title / options screens. */
+.t-prompts { position: absolute; left: 0; right: 0; bottom: 10px; }
+
+/* Title menu */
+/* Long button boxes; the selected one gets the white outline (no cursor arrow). */
+.t-menu { display: flex; flex-direction: column; gap: 10px; width: 220px; margin: 0 auto; }
+.t-opt {
+  font-size: 12px; color: var(--dim); text-align: center; padding: 12px 8px;
+  border: 4px solid var(--dark); border-radius: 6px;
+}
+.t-opt.on { color: var(--text); border-color: var(--text); }
+/* Guide triangle outside the selected box (title menu only). */
+.t-menu .t-opt { position: relative; }
+.t-menu .t-opt.on::before {
+  content: '▶'; position: absolute; left: -24px; top: 50%; margin-top: -8px;
+  font-size: 10px; color: var(--text);
+}
+
+/* Options screen (fills the 360×480 title screen) */
+.title-inner:has(.t-head) { width: 100%; height: 100%; padding: 20px 18px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.t-head { font-size: 14px; align-self: stretch; text-align: left; }
+.t-hero { width: 96px; height: 96px; padding: 8px; position: relative; flex: none; }
+.t-hero svg { width: 100%; height: 100%; display: block; }
+.t-rows { align-self: stretch; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.t-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 8px 4px 8px 20px; font-size: 10px; color: var(--dim); position: relative;
+}
+.t-row::before { content: '▶'; position: absolute; left: 2px; font-size: 8px; visibility: hidden; }
+.t-row.on { color: var(--text); }
+.t-row.on::before { visibility: visible; }
+.t-val { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: inherit; }
+.t-row:not(.on) .t-val { color: var(--dark); }
+.tri { width: 8px; height: 8px; flex: none; }
+.t-row:not(.on) .tri { visibility: hidden; }
+.t-skin { min-width: 9ch; text-align: center; }
+.t-name { align-self: stretch; text-align: left; }
+.t-empty { color: var(--dim); }
+.t-row:not(.on) .t-empty { color: var(--dark); }
+.t-done { margin-top: 12px; font-size: 10px; padding: 10px 8px; }
+.t-error { font-size: 7px; color: var(--hard); text-align: center; min-height: 12px; margin-top: 8px; }
+.t-q.t-q-save { color: var(--text); }
+.t-confirm { align-self: stretch; }
+.t-q { font-size: 12px; color: var(--hard); }
+.t-sub { font-size: 7px; color: var(--muted); line-height: 2; margin: 12px 0 18px; }
+/* While the hero dies, only the hero is on screen: no title, no box, straight on black. */
+.t-confirm.is-dying { display: none; }
+.title-inner.dying { justify-content: center; }
+.title-inner.dying .t-head { display: none; }
+.title-inner.dying .t-hero { border-color: transparent; }
+/* The soul rises from the body lying on the card's floor. */
+.soul-wrap { position: absolute; left: 50%; bottom: 30px; width: 28px; height: 28px; margin-left: -14px; color: var(--text); }
+.soul { width: 100%; height: 100%; display: block; }
+/* Out of HP: the same death, alone on the black GAME OVER screen. */
+.death-hero { color: var(--hero); }
+.t-hero { color: var(--hero); }
+.lu-unlock.lu-congrats { font-size: 14px; color: var(--easy); }
+.lu-box.lu-max { font-size: 8px; color: var(--text); line-height: 2; text-align: center; }
+.lu-max small { display: block; font-size: 7px; color: var(--muted); margin-top: 8px; }
+
+.go-text { font-size: 9px; color: var(--muted); line-height: 2; }
+.go-stats { font-size: 11px; margin: 28px 0 36px; display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; }
+.go-small { color: var(--dim); margin-top: 24px; font-size: 9px; line-height: 2; }
+
+/* ---------- TOASTS / FX ---------- */
+/* The GAME OVER screen speaks for itself: no notices on top of it. */
+body:has(#modal-root .gameover) #toasts,
+body:has(#modal-root .levelup-modal) #toasts { display: none; }
+/* Notices sit at the bottom of the screen, just above the control legend. */
+#toasts { position: fixed; bottom: calc(50% - var(--screen-h) / 2 + 40px); left: 50%; transform: translateX(-50%); z-index: 70; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+.toast { --c: var(--text); padding: 10px 12px; text-align: center; width: 300px; animation: open .12s steps(3); }
+.toast b { display: block; font-size: 10px; color: var(--c); font-weight: normal; margin-bottom: 6px; }
+.toast span { font-size: 7px; color: var(--muted); }
+.toast.good { --c: var(--easy); }
+.toast.bad { --c: var(--hard); }
+.toast.gold { --c: var(--medium); }
+.toast.out { animation: fadeout .2s steps(2) forwards; }
+
+
+.crt { display: none; }
+
+/* ---------- CONTROLLER GLYPHS ---------- */
+.pr { display: inline-flex; align-items: center; white-space: nowrap; }
+.pr small { font-size: 8px; color: var(--dim); margin-right: 8px; }
+.btn {
+  display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text); color: #000; font-size: 7px; margin-right: 6px; flex: none;
+}
+.dpad { display: inline-block; width: 14px; height: 14px; position: relative; margin-right: 6px; flex: none; }
+.dpad::before, .dpad::after { content: ''; position: absolute; background: var(--text); }
+.dpad::before { left: 5px; top: 0; width: 4px; height: 14px; }
+.dpad::after { left: 0; top: 5px; width: 14px; height: 4px; }
+.press .btn { width: 22px; height: 22px; font-size: 9px; }
+.title-map { display: flex; gap: 30px; justify-content: center; margin-top: 40px; font-size: 10px; color: var(--muted); flex-wrap: wrap; }
+.title-map div { display: flex; align-items: center; }
+.press { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.press .btn { margin: 0 8px; }
+
+/* ---------- MENU ROWS ---------- */
+.menu-row {
+  position: relative; padding: 10px 12px; font-size: 10px; color: var(--muted);
+  background: #000; border: 4px solid var(--dark); border-radius: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.menu-row.selected { border-color: var(--text); color: var(--text); }
+.new-row, .new-row:not(.selected) { color: var(--text); }
+.row-val { font-size: 11px; color: var(--dim); }
+.selected .row-val { color: var(--text); }
+.empty b { color: var(--text); font-weight: normal; }
+
+/* ---------- COMMAND / OPTIONS ---------- */
+.cmd-modal { width: 300px; }
+.cmd-modal h2 { font-size: 10px; }
+.opts { display: flex; flex-direction: column; gap: 2px; }
+.opt { position: relative; padding: 7px 0 7px 20px; font-size: 10px; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+.opt-icon { width: 10px; height: 10px; flex: none; }
+.opt::before { content: '▶'; position: absolute; left: 2px; visibility: hidden; color: var(--text); }
+.opt.on::before { visibility: visible; }
+.opt.c-easy.on { color: var(--easy); } .opt.c-hard.on { color: var(--hard); }
+.opt.on:not(.c-easy):not(.c-hard) { color: var(--text); }
+.opt.c-easy:not(.on), .opt.c-hard:not(.on) { color: var(--dim); }
+
+/* ---------- FORM ---------- */
+.f-label { font-size: 8px; color: var(--dim); margin-bottom: 8px; }
+.f-row.active .f-label { color: var(--text); }
+.f-label:empty { display: none; }
+.f-val { font-size: 10px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.6; }
+.f-row.active .f-val { color: var(--text); }
+.f-val .ph { color: var(--dark); }
+.f-row.active .f-val .ph { color: var(--dim); }
+.f-val.date { display: inline-block; padding: 4px 4px; border: 3px solid var(--dark); font-size: 9px; }
+.f-row.active .f-val.date { border-color: var(--dim); }
+.f-val.date.editing { border-color: var(--text); }
+/* Two equal columns (start | end), lined up with the two buttons below. */
+.date-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: start; }
+/* "Criado em" is information only: it never lights up like an editable field. */
+.f-row.active .created .f-label, .created .f-label { color: var(--dim); }
+.created-val { font-size: 9px; color: var(--muted); padding: 7px 0; }
+.date-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.date-line .f-countdown { margin-top: 0; min-height: 0; }
+.f-hint { font-size: 7px; color: var(--muted); margin-top: 8px; line-height: 1.8; }
+.seg { padding: 2px 1px; }
+.seg.on { background: var(--text); color: #000; }
+.f-btns { display: flex; gap: 6px; }
+.f-btn {
+  flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 8px; color: var(--dim); padding: 9px 4px; border: 3px solid var(--dark); white-space: nowrap;
+}
+.btn-icon { width: 10px; height: 10px; flex: none; }
+/* Only the chosen button lights up, and only while the cursor is on this row. */
+.f-row.active .f-btn.on { color: var(--text); border-color: var(--text); }
+.f-row.active .f-btn.ok.on { border-color: var(--easy); }
+.f-row.active .f-btn.cancel.on { border-color: var(--hard); }
+.f-row.active .f-btn.on .ic-ok { color: var(--easy); }
+.f-row.active .f-btn.on .ic-cancel { color: var(--hard); }
+
+/* ---------- LEVEL UP CARD ---------- */
+.levelup-modal { text-align: center; padding: 18px 14px 14px; }
+.lu-title { font-size: 18px; color: var(--medium); }
+.lu-level { font-size: 8px; color: var(--muted); margin-top: 10px; }
+.lu-unlock { font-size: 9px; color: var(--easy); margin-top: 18px; }
+.lu-box { border: 3px solid var(--dark); padding: 12px 10px; margin: 12px 0 14px; text-align: left; }
+.lu-q { font-size: 9px; color: var(--text); margin-bottom: 10px; }
+.lu-fact { font-size: 9px; line-height: 2; color: var(--text); text-align: center; overflow-wrap: anywhere; }
+.lu-skin { display: flex; align-items: center; gap: 12px; border: 3px solid var(--medium); padding: 10px; margin: -2px 0 14px; text-align: left; }
+.lu-skin-art { width: 48px; height: 48px; flex: none; color: var(--text); }
+.lu-skin-art svg { width: 100%; height: 100%; display: block; }
+.lu-skin-text { font-size: 8px; color: var(--medium); line-height: 1.8; }
+.lu-skin-text b { display: block; font-weight: normal; font-size: 11px; color: var(--text); margin: 4px 0; }
+.lu-skin-text small { display: block; font-size: 6px; color: var(--muted); }
+.levelup-modal .f-row { padding: 0; }
+.levelup-modal .f-row::before { display: none; }
+.levelup-modal .f-btn { flex: none; width: 60%; margin: 0 auto; }
+
+/* ---------- NAME KEYBOARD ---------- */
+.name-modal { width: 344px; }
+.name-display {
+  width: 100%; font-family: var(--px); font-size: 11px; color: var(--text); text-transform: uppercase;
+  background: #000; border: 0; border-bottom: 4px solid var(--text); padding: 12px 4px; outline: none;
+  caret-color: transparent; /* replaced by .name-caret */
+}
+.name-field { position: relative; }
+/* Thick pixel caret. It blinks (on/off, no fade) — the one thing on screen allowed to. */
+.name-caret {
+  position: absolute; top: 12px; left: 4px; width: 4px; height: 12px;
+  background: var(--text); pointer-events: none;
+  animation: caret-blink 1s steps(1) infinite;
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
+.name-foot { display: flex; justify-content: space-between; font-size: 7px; color: var(--dim); margin-top: 8px; }
+/* Press Start 2P draws ← → ↑ ↓ as blanks; app.js wraps them in .arw */
+.arw { font-family: 'Segoe UI Symbol', Arial, sans-serif; font-style: normal; font-weight: bold; font-size: 1.25em; line-height: 1; }
+
+/* ---------- KEYFRAMES ---------- */
+@keyframes clearing {
+  0%, 40% { border-color: var(--easy); }
+  100% { opacity: 0; transform: translateX(40px); }
+}
+@keyframes shake {
+  0%,100% { transform: translate(0); }
+  25% { transform: translate(-6px, 0); } 50% { transform: translate(6px, 0); } 75% { transform: translate(-3px, 0); }
+}
+@keyframes open { from { transform: scale(.9); opacity: 0; } }
+@keyframes fadeout { to { opacity: 0; visibility: hidden; } }
+
+/* ---------- RESPONSIVE ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+}

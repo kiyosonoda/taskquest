@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TaskQuest</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <!-- Hero in a square card on the left; name, XP and HP beside it. -->
+  <div class="top">
+  <div class="hero-card" id="hero" data-hero aria-label="Personagem"></div>
+  <header class="hud" id="hud">
+    <div class="hud-head">
+      <div class="logo" id="hud-name"></div>
+      <div class="hud-clock" id="hud-clock">00:00</div>
+    </div>
+
+    <div class="xp">
+      <div class="xp-label"><span class="lv">LV. <b id="hud-level">1</b></span><span id="hud-xp-text">0 / 100</span></div>
+      <div class="bar xp-bar" id="hud-xp-bar"><div id="hud-xp-fill"></div></div>
+    </div>
+
+    <div class="hud-hp">
+      <span class="lbl">HP</span>
+      <div id="hud-hearts" class="hearts"></div>
+    </div>
+  </header>
+  </div>
+
+
+  <main class="board">
+    <ul id="quest-list" class="quest-list"></ul>
+  </main>
+
+  <footer class="prompts" id="prompts"></footer>
+</div>
+
+<div id="toasts"></div>
+<div id="modal-root"></div>
+
+<div id="title-screen" class="title-screen">
+  <!-- Filled by app.js: title menu (START / OPÇÕES) and the options screen. -->
+  <div class="title-inner" id="title-inner"></div>
+  <footer class="prompts t-prompts" id="title-prompts"></footer>
+</div>
+
+<div class="crt" aria-hidden="true"></div>
+<script src="app.js"></script>
+</body>
+</html>

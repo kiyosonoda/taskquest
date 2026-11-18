@@ -1,0 +1,31 @@
+TASKQUEST - lista de tarefas estilo videogame
+=============================================
+
+COMO INSTALAR (Windows 10 ou 11)
+
+1. Clique com o botao direito no arquivo TaskQuest.zip e escolha "Extrair tudo...".
+   Escolha uma pasta onde ele vai ficar de vez (por exemplo, Documentos).
+2. Abra a pasta extraida e de dois cliques em "Instalar TaskQuest".
+   - Se o Windows mostrar "O Windows protegeu o computador", clique em
+     "Mais informacoes" e depois em "Executar assim mesmo".
+3. Pronto: aparece o atalho TaskQuest na Area de Trabalho e no Menu Iniciar.
+
+IMPORTANTE
+- Nao mova nem apague a pasta extraida. Se mudar de lugar, rode o
+  "Instalar TaskQuest" de novo.
+- Funciona sem internet: tudo, inclusive a fonte pixelada, ja vem na pasta.
+- Seu progresso fica salvo no Microsoft Edge deste computador. Ao limpar os
+  "cookies e dados de sites" do Edge, o progresso e apagado junto.
+
+CONTROLES
+- Setas: mover
+- Z: confirmar
+- X: cancelar / voltar
+(Na hora de digitar nomes, o teclado digita normal: Enter confirma, Esc volta.)
+
+COMO JOGAR
+- Cada tarefa e uma quest: EASY (+10 XP), MEDIUM (+25 XP) ou HARD (+50 XP).
+- Conclua antes do prazo para ganhar XP e subir de nivel.
+- Voce tem 3 coracoes. Quest que passa do prazo custa 1. Sem coracoes: GAME OVER.
+- Cada nivel vale 100 XP. Subir de nivel devolve 1 coracao (maximo 3) e
+  desbloqueia uma curiosidade.
