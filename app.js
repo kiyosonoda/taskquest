@@ -710,22 +710,54 @@ function emptyHTML() {
   return '';
 }
 
+// Active quests are grouped by when they are due. Weeks start on Monday; the first group that fits wins.
+function deadlineGroup(t, now) {
+  const day = new Date(now); day.setHours(0, 0, 0, 0);
+  const plusDays = n => { const d = new Date(day); d.setDate(d.getDate() + n); return d.getTime(); };
+  const monthStart = n => new Date(day.getFullYear(), day.getMonth() + n, 1).getTime();
+  const nextMonday = plusDays((8 - day.getDay()) % 7 || 7);
+  if (t < plusDays(1)) return 'HOJE';
+  if (t < nextMonday) return 'ESTA SEMANA';
+  if (t < nextMonday + 7 * 864e5) return 'PRÓXIMA SEMANA';
+  if (t < monthStart(1)) return 'ESTE MÊS';
+  if (t < monthStart(2)) return 'PRÓXIMO MÊS';
+  return 'MAIS TARDE';
+}
+
 function renderList() {
   const items = itemsFor(ui.tab);
   ui.cursor = Math.max(0, Math.min(ui.cursor, items.length - 1));
   const now = Date.now();
-  let html = items.map((it, i) => itemHTML(it, i === ui.cursor, now)).join('');
+  const grouped = TABS[ui.tab].id === 'active';
+  const groups = {};
+  if (grouped) items.forEach(it => { if (it.q) { const g = deadlineGroup(it.q.deadline, now); groups[g] = (groups[g] || 0) + 1; } });
+  let last = null;
+  let html = items.map((it, i) => {
+    let head = '';
+    if (grouped && it.q) {
+      const g = deadlineGroup(it.q.deadline, now);
+      if (g !== last) { head = `<li class="q-group"><span>${g}</span><span>${groups[g]}</span></li>`; last = g; }
+    }
+    return head + itemHTML(it, i === ui.cursor, now);
+  }).join('');
   if (TABS[ui.tab].id !== 'system' && !listFor(ui.tab).length) html += emptyHTML();
   const el = $('#quest-list');
   el.innerHTML = html;
-  const sel = el.querySelector('.selected');
-  if (sel) sel.scrollIntoView({ block: 'nearest' });
+  scrollToSelected();
+}
+
+// Keep the selected row in view, and its group heading too when it is the first of its group.
+function scrollToSelected() {
+  const sel = $('#quest-list .selected');
+  if (!sel) return;
+  const prev = sel.previousElementSibling;
+  if (prev && prev.classList.contains('q-group')) prev.scrollIntoView({ block: 'nearest' });
+  sel.scrollIntoView({ block: 'nearest' });
 }
 
 function updateSelection() {
   $$('#quest-list > .quest, #quest-list > .menu-row').forEach((li, i) => li.classList.toggle('selected', i === ui.cursor));
-  const sel = $('#quest-list .selected');
-  if (sel) sel.scrollIntoView({ block: 'nearest' });
+  scrollToSelected();
   renderPrompts();
 }
 
