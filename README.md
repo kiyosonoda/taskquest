@@ -46,7 +46,7 @@ Nenhuma outra tecla faz nada, exceto quando se digita um nome (aí o teclado dig
 - **Nova quest:** selecione `+ NOVA QUEST` e aperte Z.
   - **Nome:** digitado no teclado.
   - **Dificuldade:** `← →` para escolher.
-  - **Prazo final:** começa em amanhã. Z entra na edição; `← →` escolhe dia/mês/ano, `↑ ↓` ajusta; Z sai. A quest vence às 23:59 desse dia.
+  - **Prazo final:** começa em amanhã. Z entra na edição; `← →` escolhe dia/mês/ano, `↑ ↓` ajusta; Z sai. A quest vence às 18:00 desse dia (fim do horário comercial).
   - Desça até **ACEITAR QUEST** e aperte Z.
 - **Numa quest:** Z abre o menu: Concluir, Editar, Abandonar, Voltar.
 

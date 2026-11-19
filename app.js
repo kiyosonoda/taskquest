@@ -24,10 +24,12 @@ const TABS = [
   { id: 'failed', label: 'FALHADAS' },
   { id: 'system', label: 'OPÇÕES' },
 ];
-const endOfDay = (n, addDays) => { const d = new Date(n); d.setDate(d.getDate() + addDays); d.setHours(23, 59, 0, 0); return d; };
-const defaultDeadline = () => endOfDay(new Date(), 1); // new quests start due tomorrow 23:59
+const DEADLINE_HOUR = 18; // quests are due at the end of business hours, not at midnight
+const atDeadlineHour = d => { d.setHours(DEADLINE_HOUR, 0, 0, 0); return d; };
+const endOfDay = (n, addDays) => { const d = new Date(n); d.setDate(d.getDate() + addDays); return atDeadlineHour(d); };
+const defaultDeadline = () => endOfDay(new Date(), 1); // new quests start due tomorrow 18:00
 const FORM_ROWS = ['name', 'diff', 'date', 'actions'];
-const DATE_SEGS = ['DIA', 'MÊS', 'ANO']; // no time of day: a deadline is the end of that day (23:59)
+const DATE_SEGS = ['DIA', 'MÊS', 'ANO']; // no time of day: a deadline is the end of that business day (18:00)
 const NAME_MAX = 60;
 const XP_PER_LEVEL = 100;
 const xpNeed = () => XP_PER_LEVEL; // every level costs the same
@@ -196,6 +198,13 @@ function load() {
       while (out.player.xp >= XP_PER_LEVEL && out.player.level < MAX_LEVEL) { out.player.xp -= XP_PER_LEVEL; out.player.level++; }
       if (out.player.level >= MAX_LEVEL) { out.player.level = MAX_LEVEL; out.player.xp = 0; }
       out.player.hp = Math.min(out.player.hp, MAX_HP); // saves from when there were 5 hearts
+      // Quests used to be due at 23:59: move open ones to 18:00 that day, unless that hour already passed.
+      for (const q of out.quests) {
+        const d = new Date(q.deadline);
+        if (q.status !== 'active' || d.getHours() !== 23 || d.getMinutes() !== 59) continue;
+        const t = atDeadlineHour(d).getTime();
+        if (t > Date.now()) q.deadline = t;
+      }
       return out;
     }
   } catch (e) { /* corrupted or blocked storage: start fresh */ }
@@ -992,7 +1001,7 @@ function adjustDate(dir) {
     case 1: d.setMonth(d.getMonth() + dir); break;
     case 2: d.setFullYear(d.getFullYear() + dir); break;
   }
-  d.setHours(23, 59, 0, 0);
+  atDeadlineHour(d);
   m.deadline = d;
 }
 
