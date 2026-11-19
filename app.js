@@ -636,7 +636,8 @@ function heartSVG(full) {
     const cls = ch === '+' && full ? 'hl' : 'px';
     rects += `<rect class="${cls}" x="${x}" y="${y}" width="1" height="1"/>`;
   }));
-  return `<svg class="heart ${full ? 'full' : 'empty'}" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+  // 'lost', not 'empty': .empty is the dashed "no quests" box and would restyle the heart.
+  return `<svg class="heart ${full ? 'full' : 'lost'}" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
 }
 
 // ---------------------------------------------------------------- render: main screen

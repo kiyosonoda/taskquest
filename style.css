@@ -94,7 +94,7 @@ body { display: grid; place-items: center; }
 .heart { width: 17.5px; height: 15px; display: block; }
 .heart.full .px { fill: var(--hard); }
 .heart.full .hl { fill: var(--text); }
-.heart.empty .px { fill: var(--dark); }
+.heart.lost .px { fill: var(--dark); }
 
 .hud-stats { gap: 18px; }
 .hud-stats div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
