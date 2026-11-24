@@ -231,7 +231,19 @@ kbd.k-cyan { background: var(--medium); }
 .preset-opt.on { border-color: var(--text); color: var(--text); }
 .f-countdown { margin-top: 8px; font-size: 7px; color: var(--muted); min-height: 12px; }
 .f-countdown.bad { color: var(--hard); }
-.f-error { color: var(--hard); font-size: 7px; min-height: 12px; margin: 6px 4px 0 18px; }
+/* ATENÇÃO! window: saving a later deadline costs a heart. */
+.postpone-modal h2 { color: var(--hard); }
+.pp-text { font-size: 8px; line-height: 2; color: var(--muted); margin: 14px 0; }
+.pp-cost { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 14px; color: var(--hard); margin: 4px 0 18px; }
+.pp-cost .heart { width: 24.5px; height: 21px; }
+/* SIM / NÃO as boxes, with the guide triangle outside the selected one (like the title menu). */
+.pp-choice { display: flex; justify-content: center; gap: 34px; padding-left: 20px; }
+.pp-choice .t-opt { position: relative; width: 92px; font-size: 10px; padding: 10px 6px; }
+.pp-choice .t-opt.on::before {
+  content: '▶'; position: absolute; left: -24px; top: 50%; margin-top: -8px;
+  font-size: 10px; color: var(--text);
+}
+.f-error {color: var(--hard); font-size: 7px; min-height: 12px; margin: 6px 4px 0 18px; }
 
 
 .confirm-modal { text-align: center; }

@@ -974,11 +974,39 @@ function openForm(q) {
     title: q ? q.title : '',
     diff: q ? q.diff : 'medium',
     deadline: q && !retry ? new Date(q.deadline) : defaultDeadline(),
+    // Postponing an open quest costs a heart, or a missed deadline could always be dodged by editing it.
+    origDeadline: q && !retry ? q.deadline : null,
     row: retry ? 2 : 0, error: '', btn: 0, // btn: 0 = accept, 1 = cancel
     editingDate: false, seg: 0,
     naming: !q,
   };
   sfx.open(); renderForm();
+}
+
+const postponed = m => m.origDeadline !== null && m.deadline.getTime() > m.origDeadline;
+// Asked after SALVAR when the deadline was pushed later; NÃO goes back to the form.
+// On the last heart it can't be paid at all: the window only says so, with a single OK.
+const canPostpone = () => state.player.hp > 1;
+function renderPostponeAsk() {
+  const m = ui.modal;
+  const body = canPostpone()
+    ? `<p class="pp-text">ADIAR O PRAZO DA TAREFA CUSTARÁ UMA VIDA. VOCÊ DESEJA CONTINUAR?</p>
+    <div class="pp-cost">-1 ${heartSVG(true)}</div>
+    <div class="pp-choice">${['SIM', 'NÃO'].map((l, i) => `<div class="t-opt ${i === m.askSel ? 'on' : ''}">${l}</div>`).join('')}</div>`
+    : `<p class="pp-text">VOCÊ SÓ TEM UMA VIDA. NÃO É POSSÍVEL ADIAR O PRAZO DA TAREFA.</p>
+    <div class="pp-choice"><div class="t-opt on">OK</div></div>`;
+  $('#modal-root').innerHTML = `
+  <div class="modal confirm-modal postpone-modal" role="alertdialog">
+    <div class="modal-head"><h2>ATENÇÃO!</h2></div>
+    ${body}
+  </div>`;
+}
+function postponeAskInput(b) {
+  const m = ui.modal;
+  if (!canPostpone()) { if (b === 'a' || b === 'b') { m.asking = false; sfx.close(); renderForm(); } return; }
+  if (['left', 'right', 'up', 'down'].includes(b)) { m.askSel = 1 - m.askSel; sfx.move(); return renderPostponeAsk(); }
+  if (b === 'a' && m.askSel === 0) return submitForm(true);
+  m.asking = false; sfx.close(); renderForm();
 }
 
 function countdownHTML(deadline) {
@@ -989,6 +1017,7 @@ function countdownHTML(deadline) {
 function renderForm() {
   const m = ui.modal;
   if (m.naming) return renderName();
+  if (m.asking) return renderPostponeAsk();
   const head = m.retry ? ['RETRY', 'TENTAR DE NOVO'] : m.editId ? ['EDITAR', 'EDITAR QUEST'] : ['NOVA', 'NOVA QUEST'];
   const row = (key, label, body) =>
     `<div class="f-row r-${key} ${FORM_ROWS[m.row] === key ? 'active' : ''}"><div class="f-label">${label}</div>${body}</div>`;
@@ -1039,6 +1068,7 @@ function adjustDate(dir) {
 
 function formInput(b) {
   const m = ui.modal;
+  if (m.asking) return postponeAskInput(b);
   m.error = '';
   if (m.editingDate) {
     if (b === 'left' || b === 'right') { m.seg = wrap(m.seg + (b === 'right' ? 1 : -1), DATE_SEGS.length); sfx.move(); }
@@ -1071,13 +1101,15 @@ function formError(msg, rowKey) {
   m.error = msg; m.row = FORM_ROWS.indexOf(rowKey);
   sfx.error(); renderForm(); shake($('.form-modal'));
 }
-function submitForm() {
+function submitForm(confirmed) {
   const m = ui.modal;
   const title = m.title.trim();
   if (!title) return formError('A QUEST PRECISA DE UM NOME', 'name');
   if (m.deadline.getTime() <= Date.now()) return formError('O PRAZO PRECISA SER NO FUTURO', 'date');
+  if (postponed(m) && (!confirmed || !canPostpone())) { m.asking = true; m.askSel = 1; sfx.error(); return renderPostponeAsk(); }
 
   const now = Date.now(), dl = m.deadline.getTime();
+  const cost = postponed(m);
   let id;
   if (m.editId) {
     const q = byId(m.editId);
@@ -1087,17 +1119,22 @@ function submitForm() {
       if (q.deadline !== dl || m.retry) { q.deadline = dl; q.startAt = now; }
       if (m.retry) { q.status = 'active'; delete q.failedAt; }
     }
-    toast(m.retry ? 'QUEST REINICIADA' : 'QUEST ATUALIZADA', title, 'info');
+    if (cost) toast('PRAZO ADIADO', `${title} · -1 HP`, 'bad');
+    else toast(m.retry ? 'QUEST REINICIADA' : 'QUEST ATUALIZADA', title, 'info');
   } else {
     id = uid();
     state.quests.push({ id, title, diff: m.diff, deadline: dl, createdAt: now, startAt: now, status: 'active' });
     toast('QUEST ACEITA!', `${title} · ${DIFF[m.diff].label} · +${DIFF[m.diff].xp} XP`, 'info');
   }
-  save(); sfx.confirm();
+  const p = state.player;
+  if (cost) p.hp = Math.max(0, p.hp - 1);
+  save();
+  if (cost) { sfx.fail(); shake(); } else sfx.confirm();
   closeModal(true);
   ui.tab = 0;
   ui.cursor = Math.max(0, itemsFor(0).findIndex(it => it.q && it.q.id === id));
   render();
+  if (cost && p.hp <= 0) openGameOver();
 }
 
 /* --- quest name: typed on the real keyboard --- */

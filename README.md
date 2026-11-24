@@ -54,6 +54,7 @@ Nenhuma outra tecla faz nada, exceto quando se digita um nome (aí o teclado dig
 
 - **EASY** (verde) +10 XP · **MEDIUM** (amarelo) +25 XP · **HARD** (vermelho) +50 XP
 - Você tem 3 ♥. Quest que passa do prazo custa 1 ♥. Sem corações: o personagem morre e é **GAME OVER** (continuar restaura o HP, mas perde o XP do nível atual).
+- Adiar o prazo de uma quest aberta também custa 1 ♥ (o jogo pede confirmação). Com 1 ♥ só, não dá para adiar.
 - Todo nível custa 100 XP. Subir de nível devolve 1 ♥ (no máximo 3) e mostra uma frase motivacional. A cada 10 níveis, uma skin nova.
 - O nível máximo é **LV. 100**, e ele guarda uma surpresa.
 - O timer fica amarelo com menos de 24h e vermelho com menos de 1h.
