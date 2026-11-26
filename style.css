@@ -469,6 +469,54 @@ body:has(#modal-root .levelup-modal) #toasts { display: none; }
 /* Press Start 2P draws ← → ↑ ↓ as blanks; app.js wraps them in .arw */
 .arw { font-family: 'Segoe UI Symbol', Arial, sans-serif; font-style: normal; font-weight: bold; font-size: 1.25em; line-height: 1; }
 
+/* ---------- HORA EXTRA (secret mini-game, shooter.js) ---------- */
+.t-opt.t-secret { color: #7c5000; border-color: #3c2800; }
+.t-opt.t-secret.on { color: var(--medium); border-color: var(--medium); }
+.ot { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; background: #000; }
+.ot.hidden { display: none; }
+.ot-box { width: var(--screen-w); height: var(--screen-h); display: flex; flex-direction: column; overflow: hidden; }
+.ot-view { position: relative; width: 360px; height: 400px; flex: none; }
+.ot-view canvas { display: block; width: 360px; height: 400px; image-rendering: pixelated; }
+.ot-hurt { position: absolute; inset: 0; background: var(--hard); opacity: 0; pointer-events: none; }
+.ot-hurt.on { animation: ot-hurt .3s steps(3); }
+@keyframes ot-hurt { from { opacity: .45; } to { opacity: 0; } }
+.ot-banner {
+  position: absolute; left: 0; right: 0; top: 18px; text-align: center; font-size: 12px;
+  color: var(--text); text-shadow: 2px 2px 0 #000; opacity: 0; transition: opacity .2s steps(2);
+}
+.ot-banner.on { opacity: 1; }
+.ot-banner.gold { color: var(--medium); font-size: 16px; }
+.ot-banner.good { color: var(--easy); }
+.ot-banner.bad { color: var(--hard); }
+.ot-menu { position: absolute; inset: 0; display: none; place-items: center; background: rgba(0, 0, 0, .55); }
+.ot-menu.on { display: grid; }
+.ot-card {
+  width: 300px; padding: 18px 14px; text-align: center; background: #000;
+  border: 4px solid var(--text); border-radius: 6px; display: flex; flex-direction: column; gap: 12px; align-items: center;
+}
+.ot-card p { font-size: 8px; line-height: 2; color: var(--muted); }
+.ot-title { font-size: 18px; line-height: 1.4; color: var(--medium); }
+.ot-title.bad { color: var(--hard); }
+.ot-hero { width: 64px; height: 64px; color: var(--hero); }
+.ot-hero svg { width: 100%; height: 100%; display: block; }
+.ot-card .ot-keys { color: var(--text); }
+.ot-card .ot-best { color: var(--easy); }
+.ot-card .ot-press { color: var(--text); font-size: 10px; }
+.ot-opts { display: flex; flex-direction: column; gap: 8px; width: 200px; }
+.ot-opts div { font-size: 10px; color: var(--dim); padding: 8px; border: 4px solid var(--dark); border-radius: 6px; }
+.ot-opts div.on { color: var(--text); border-color: var(--text); }
+.ot-hud {
+  height: 80px; flex: none; border-top: 4px solid var(--dark); padding: 0 8px;
+  display: grid; grid-template-columns: 56px repeat(4, 1fr); align-items: center; gap: 4px;
+}
+.ot-face { width: 52px; height: 52px; border: 4px solid var(--text); border-radius: 6px; color: var(--hero); padding: 2px; }
+.ot-face.low { border-color: var(--hard); }
+.ot-face svg { width: 100%; height: 100%; display: block; }
+.ot-stat { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ot-stat small { font-size: 6px; color: var(--dim); }
+.ot-stat b { font-size: 14px; font-weight: normal; }
+.ot-stat b.low { color: var(--hard); }
+
 /* ---------- KEYFRAMES ---------- */
 @keyframes clearing {
   0%, 40% { border-color: var(--easy); }

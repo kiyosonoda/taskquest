@@ -251,7 +251,30 @@ const sfx = (() => {
     } catch (e) { /* audio unavailable */ }
   }
   const seq = (notes, step, opts) => notes.forEach((f, i) => tone(f, opts.d || .12, { ...opts, at: i * step }));
+  // A burst of filtered white noise: shotgun blasts and punches in HORA EXTRA.
+  function noise(d, { vol = .08, at = 0, lp = 1200 } = {}) {
+    if (!state.sound) return;
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = ctx.currentTime + at, n = Math.floor(ctx.sampleRate * d);
+      const buf = ctx.createBuffer(1, n, ctx.sampleRate), data = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = buf; f.type = 'lowpass'; f.frequency.value = lp; g.gain.value = vol;
+      src.connect(f).connect(g).connect(ctx.destination);
+      src.start(t);
+    } catch (e) { /* audio unavailable */ }
+  }
   return {
+    // HORA EXTRA (shooter.js)
+    shot:     () => { noise(.35, { vol: .14, lp: 900 }); tone(90, .2, { slide: 40, vol: .05 }); tone(220, .04, { at: .32, vol: .03 }); tone(160, .05, { at: .42, vol: .03 }); },
+    punch:    () => noise(.08, { vol: .08, lp: 500 }),
+    hit:      () => tone(200, .06, { vol: .03, slide: 120 }),
+    kill:     () => tone(400, .25, { slide: 60, type: 'sawtooth', vol: .04 }),
+    hurt:     () => tone(160, .18, { slide: 80, type: 'sawtooth', vol: .06 }),
+    pickup:   () => seq([660, 990], .05, { vol: .04, d: .06 }),
+    fireball: () => tone(300, .25, { slide: 150, type: 'triangle', vol: .04 }),
+    secret:   () => seq([523, 659, 784, 1047, 784, 1047], .06, { type: 'triangle', vol: .05, d: .1 }),
     move:     () => tone(660, .04, { vol: .02 }),
     tab:      () => tone(520, .06, { vol: .03 }),
     type:     () => tone(880, .03, { vol: .02 }),
@@ -437,6 +460,23 @@ const SKINS = {
     // The tie stops above the belt row so it doesn't read as a gap down to the legs.
     torso: ['....###..###....', '...#.##..##.#...', '...#.######.#...', '............####', '............####'],
   },
+  // LV 5. Street kid: flat-brim cap turned to the side, hoodie with a chain hanging in a V.
+  street: {
+    label: 'CRIA',
+    head: [
+      '................',
+      '.....######.....',
+      '....########....',
+      '....###########.', // the brim sticks out to one side
+      '....#......#....',
+      '....#.#..#.#....',
+      '....#......#....',
+      '.....######.....',
+    ],
+    eyesClosed: [5, '....#......#....'],
+    // Baggy hoodie; the dark V is the chain, meeting at the pendant.
+    torso: ['...##.####.##...', '..#.##.##.##.#..', '..#.###..###.#..'],
+  },
   hammerhead: {
     label: 'TUBARÃO-MARTELO',
     head: [
@@ -472,10 +512,10 @@ const SKINS = {
   },
 };
 // Order shown with ← →; UNKNOWN and TUBARÃO-MARTELO close the list.
-// Every hero starts as TRABALHADOR; each other skin unlocks at its level (one every 10).
-// The further up, the more special, then the stranger (burnout).
+// Every hero starts as TRABALHADOR; each other skin unlocks at its level (one every 10,
+// plus CRIA early at LV 5). The further up, the more special, then the stranger (burnout).
 const SKIN_UNLOCK = {
-  worker: 1, knight: 10, mage: 20, ninja: 30, orc: 40,
+  worker: 1, street: 5, knight: 10, mage: 20, ninja: 30, orc: 40,
   skeleton: 50, robot: 60, coffee: 70, hammerhead: 80, unknown: 90, cat: 100,
 };
 const SKIN_KEYS = Object.keys(SKIN_UNLOCK); // order shown with ← →
@@ -607,22 +647,24 @@ function spriteRects(rows) {
   grid.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') rects += `<rect x="${x}" y="${y}" width="1" height="1"/>`; }));
   return rects;
 }
-const monsterSVG = (f0, f1) =>
+const monsterSVG = ([f0, f1]) =>
   `<svg class="monster" viewBox="0 0 12 12" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true"><g class="f0">${spriteRects(f0)}</g><g class="f1">${spriteRects(f1)}</g></svg>`;
-const MONSTERS = {
-  easy: monsterSVG( // slime: bounces / squishes
+// The raw frames are also the enemies of the HORA EXTRA mini-game (shooter.js).
+const MONSTER_ROWS = {
+  easy: [ // slime: bounces / squishes
     ['.....##.....', '....####....', '...######...', '..##.##.##..', '..########..', '.##########.', '.##########.', '............'],
     ['.....##.....', '...######...', '..########..', '.###.##.###.', '############', '############', '............'],
-  ),
-  medium: monsterSVG( // bat: flaps its wings
+  ],
+  medium: [ // bat: flaps its wings
     ['#..........#', '##........##', '###.#..#.###', '############', '.###.##.###.', '..#.####.#..', '.....##.....', '............', '............'],
     ['....#..#....', '...######...', '..##.##.##..', '.##########.', '###..##..###', '##........##', '#..........#', '............'],
-  ),
-  hard: monsterSVG( // horned skull boss: chomps
+  ],
+  hard: [ // horned skull boss: chomps
     ['#..........#', '##.######.##', '.##########.', '.##########.', '.#..####..#.', '.#..####..#.', '.####..####.', '..########..', '..#.#..#.#..', '...######...', '............', '............'],
     ['#..........#', '##.######.##', '.##########.', '.##########.', '.#..####..#.', '.#..####..#.', '.####..####.', '..########..', '..#.#..#.#..', '............', '..#.#..#.#..', '...######...'],
-  ),
+  ],
 };
+const MONSTERS = Object.fromEntries(Object.entries(MONSTER_ROWS).map(([k, f]) => [k, monsterSVG(f)]));
 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   setInterval(() => $('#modal-root').classList.toggle('mf1'), 400);
 }
@@ -1326,7 +1368,27 @@ function startGame() {
 // flow: which screen the name entry returns to ('options' or 'setup').
 const title = { screen: 'menu', flow: 'options', sel: 0, opt: 0, yes: 1, error: '' };
 // Before the first hero is created (first run or after a reset), the menu offers only START.
-const titleMenu = () => (state.setupDone ? ['START', 'OPÇÕES'] : ['START']);
+// HORA EXTRA only shows after its secret code is typed on this menu, and only until the app
+// is closed: it is never saved, so every launch starts with the button hidden again.
+let overtimeUnlocked = false;
+const titleMenu = () => [...(state.setupDone ? ['START', 'OPÇÕES'] : ['START']), ...(overtimeUnlocked ? ['HORA EXTRA'] : [])];
+// The classic NES cheat code: ↑ ↑ ↓ ↓ ← → ← → B A (here B is X and A is Z).
+const SECRET_CODE = ['up', 'up', 'down', 'down', 'left', 'right', 'left', 'right', 'b', 'a'];
+const secretBuf = [];
+// The HORA EXTRA mini-game (shooter.js), starring CRIA. Its own loop and keys while open.
+const overtime = window.TaskQuestOvertime ? window.TaskQuestOvertime({
+  sfx,
+  readButton: e => readButton(e),
+  monsters: MONSTER_ROWS,
+  heroSVG: () => gridSVG(buildGrids('street').stand),
+  faceSVG: closed => {
+    const sk = SKINS.street, head = closed ? sk.head.map((r, i) => (i === sk.eyesClosed[0] ? sk.eyesClosed[1] : r)) : sk.head;
+    return gridSVG(composeGrid([[head, 4]]));
+  },
+  getBest: () => state.overtime?.best || null,
+  setBest: best => { state.overtime = { best }; save(); }, // only the record is saved
+  onExit: () => { ui.overtime = false; renderTitle(); },
+}) : null;
 // COR only exists from LV 100 on: until then it's a secret, not a locked row.
 const optRows = () => (isMaxLevel()
   ? ['sound', 'name', 'skin', 'color', 'reset', 'back']
@@ -1346,7 +1408,7 @@ function renderTitle() {
     el.innerHTML = `
       <div class="title-sub">Your corporate journey</div>
       <h1 class="title-logo">TaskQuest</h1>
-      <div class="t-menu">${titleMenu().map((l, i) => `<div class="t-opt ${i === t.sel ? 'on' : ''}">${l}</div>`).join('')}</div>`;
+      <div class="t-menu">${titleMenu().map((l, i) => `<div class="t-opt ${l === 'HORA EXTRA' ? 't-secret' : ''} ${i === t.sel ? 'on' : ''}">${l}</div>`).join('')}</div>`;
     return;
   }
   let body;
@@ -1416,6 +1478,14 @@ function titleInput(b) {
   const t = title;
   if (t.screen === 'dying') return;
   if (t.screen === 'menu') {
+    // The secret code reveals HORA EXTRA until the app closes. Its final A (Z) only finishes
+    // the code: it never also confirms the option that happens to be selected.
+    secretBuf.push(b); if (secretBuf.length > SECRET_CODE.length) secretBuf.shift();
+    if (overtime && secretBuf.join() === SECRET_CODE.join()) {
+      secretBuf.length = 0;
+      overtimeUnlocked = true;
+      t.sel = titleMenu().indexOf('HORA EXTRA'); sfx.secret(); return renderTitle();
+    }
     if (b === 'up' || b === 'down') {
       const n = titleMenu().length;
       if (n < 2) return;
@@ -1423,7 +1493,9 @@ function titleInput(b) {
     }
     if (t.sel >= titleMenu().length) t.sel = 0;
     if (b !== 'a') return;
-    if (t.sel === 0) {
+    const pick = titleMenu()[t.sel];
+    if (pick === 'HORA EXTRA') { ui.overtime = true; sfx.open(); return overtime.open(); }
+    if (pick === 'START') {
       if (state.setupDone) return startGame();
       state.skin = 'worker'; // new heroes start as TRABALHADOR
       t.flow = 'setup'; t.screen = 'setup'; t.opt = 0; t.error = ''; sfx.open(); renderTitle();
@@ -1551,6 +1623,7 @@ function playDeath() {
 }
 
 document.addEventListener('keydown', e => {
+  if (ui.overtime) return; // HORA EXTRA reads the keys itself
   // Typing the quest name: the keyboard is a keyboard, Z and X are just letters.
   if (ui.modal && ui.modal.type === 'form' && ui.modal.naming) return nameKey(e);
   if (!ui.started && title.screen === 'naming') return titleNameKey(e);

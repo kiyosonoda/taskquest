@@ -48,7 +48,7 @@ Nenhuma outra tecla faz nada, exceto quando se digita um nome (aí o teclado dig
 - **OPÇÕES** (aparece depois que o personagem existe):
   - **Som:** liga ou desliga.
   - **Nome:** nome do personagem (até 12 letras).
-  - **Skin:** `← →` troca entre as skins já desbloqueadas. A cada 10 níveis libera uma: LV 10 cavaleiro, 20 mago, 30 ninja, 40 orc, 50 esqueleto, 60 robô, 70 cafeteira, 80 tubarão-martelo, 90 unknown, 100 gato.
+  - **Skin:** `← →` troca entre as skins já desbloqueadas. A cada 10 níveis libera uma (mais uma bônus no LV 5): LV 5 cria, 10 cavaleiro, 20 mago, 30 ninja, 40 orc, 50 esqueleto, 60 robô, 70 cafeteira, 80 tubarão-martelo, 90 unknown, 100 gato.
   - **Reset:** pede confirmação, o personagem morre e solta a alminha. Tudo volta ao início, inclusive as quests.
 
 ## Como jogar
@@ -66,7 +66,7 @@ Nenhuma outra tecla faz nada, exceto quando se digita um nome (aí o teclado dig
 - **EASY** (verde) +10 XP · **MEDIUM** (amarelo) +25 XP · **HARD** (vermelho) +50 XP
 - Você tem 3 ♥. Quest que passa do prazo custa 1 ♥. Sem corações: o personagem morre e é **GAME OVER** (continuar restaura o HP, mas perde o XP do nível atual).
 - Adiar o prazo de uma quest aberta também custa 1 ♥ (o jogo pede confirmação). Com 1 ♥ só, não dá para adiar.
-- Todo nível custa 100 XP. Subir de nível devolve 1 ♥ (no máximo 3) e mostra uma frase motivacional. A cada 10 níveis, uma skin nova.
+- Todo nível custa 100 XP. Subir de nível devolve 1 ♥ (no máximo 3) e mostra uma frase motivacional. A cada 10 níveis (e no LV 5), uma skin nova.
 - O nível máximo é **LV. 100**, e ele guarda uma surpresa.
 - O timer fica amarelo com menos de 24h e vermelho com menos de 1h.
 
