@@ -500,6 +500,7 @@ body:has(#modal-root .levelup-modal) #toasts { display: none; }
 .ot-hero { width: 64px; height: 64px; color: var(--hero); }
 .ot-hero svg { width: 100%; height: 100%; display: block; }
 .ot-card .ot-keys { color: var(--text); }
+.ot-card .ot-weapon { color: var(--medium); }
 .ot-card .ot-best { color: var(--easy); }
 .ot-card .ot-press { color: var(--text); font-size: 10px; }
 .ot-opts { display: flex; flex-direction: column; gap: 8px; width: 200px; }

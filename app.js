@@ -269,6 +269,12 @@ const sfx = (() => {
     // HORA EXTRA (shooter.js)
     shot:     () => { noise(.35, { vol: .14, lp: 900 }); tone(90, .2, { slide: 40, vol: .05 }); tone(220, .04, { at: .32, vol: .03 }); tone(160, .05, { at: .42, vol: .03 }); },
     punch:    () => noise(.08, { vol: .08, lp: 500 }),
+    // One sound per kind of weapon (each skin has its own weapon; see WEAPONS in shooter.js).
+    clack:    () => { tone(1500, .03, { vol: .03 }); noise(.04, { vol: .06, lp: 2500 }); },
+    twang:    () => { tone(180, .14, { slide: 90, type: 'triangle', vol: .06 }); noise(.06, { vol: .04, lp: 1800 }); },
+    swish:    () => noise(.12, { vol: .06, lp: 3200 }),
+    zap:      () => tone(1400, .14, { slide: 300, vol: .03 }),
+    splash:   () => { noise(.25, { vol: .06, lp: 2200 }); tone(500, .1, { slide: 200, type: 'triangle', vol: .03 }); },
     hit:      () => tone(200, .06, { vol: .03, slide: 120 }),
     kill:     () => tone(400, .25, { slide: 60, type: 'sawtooth', vol: .04 }),
     hurt:     () => tone(160, .18, { slide: 80, type: 'sawtooth', vol: .06 }),
@@ -1375,14 +1381,20 @@ const titleMenu = () => [...(state.setupDone ? ['START', 'OPÇÕES'] : ['START']
 // The classic NES cheat code: ↑ ↑ ↓ ↓ ← → ← → B A (here B is X and A is Z).
 const SECRET_CODE = ['up', 'up', 'down', 'down', 'left', 'right', 'left', 'right', 'b', 'a'];
 const secretBuf = [];
-// The HORA EXTRA mini-game (shooter.js), starring CRIA. Its own loop and keys while open.
+// The HORA EXTRA mini-game (shooter.js), starring the current hero: each skin brings its own
+// weapon, and the level adds damage on top. Its own loop and keys while open.
 const overtime = window.TaskQuestOvertime ? window.TaskQuestOvertime({
   sfx,
   readButton: e => readButton(e),
   monsters: MONSTER_ROWS,
-  heroSVG: () => gridSVG(buildGrids('street').stand),
+  getSkin: () => { heroGrids(); return state.skin; }, // heroGrids() falls back to an unlocked skin
+  getLevel: () => state.player.level,
+  heroSVG: () => gridSVG(heroGrids().stand),
   faceSVG: closed => {
-    const sk = SKINS.street, head = closed ? sk.head.map((r, i) => (i === sk.eyesClosed[0] ? sk.eyesClosed[1] : r)) : sk.head;
+    heroGrids();
+    const sk = SKINS[state.skin];
+    const closes = Array.isArray(sk.eyesClosed[0]) ? sk.eyesClosed : [sk.eyesClosed];
+    const head = closed ? sk.head.map((r, i) => (closes.find(([row]) => row === i) || [, r])[1]) : sk.head;
     return gridSVG(composeGrid([[head, 4]]));
   },
   getBest: () => state.overtime?.best || null,

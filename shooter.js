@@ -1,5 +1,6 @@
 /* HORA EXTRA — TaskQuest's secret mini-game.
- * The office after hours, overrun by the quest monsters. CRIA clocks in with a pump shotgun.
+ * The office after hours, overrun by the quest monsters. The hero clocks in with the weapon
+ * of their skin (see WEAPONS), stronger as the level goes up.
  * A small raycaster (walls, textured floor and ceiling, billboard sprites), drawn at 180×200
  * and scaled 2× to fill the 360×400 view above the HUD.
  *
@@ -186,27 +187,166 @@ function pixelCanvas(w, h, draw) {
   return c;
 }
 const SKIN = '#b86c3c', SKIN_D = '#7c3c1c', SLEEVE = '#2c2c5c', SLEEVE_D = '#1c1c3c';
-const WEAPON = pixelCanvas(64, 64, (poly, rect) => {
-  poly(SLEEVE, [0, 64, 18, 64, 29, 41, 21, 33, 0, 48]);            // left sleeve
-  rect(SLEEVE_D, 2, 52, 10, 2);
-  poly('#7c7c7c', [27, 46, 37, 46, 35, 6, 29, 6]);                  // barrel
-  rect('#bcbcbc', 31, 8, 1, 36);
-  rect('#3c3c3c', 29, 3, 6, 4);                                     // muzzle
-  poly('#3c3c3c', [24, 64, 40, 64, 38, 42, 26, 42]);                // receiver
-  rect('#5c5c5c', 28, 47, 8, 2);
-  poly('#ac7c00', [26, 39, 38, 39, 37, 26, 27, 26]);                // wooden pump
-  rect('#7c5000', 27, 29, 10, 1); rect('#7c5000', 27, 32, 10, 1); rect('#7c5000', 26, 35, 12, 1);
-  poly(SKIN, [17, 42, 28, 37, 31, 29, 27, 26, 20, 29, 15, 36]);     // left hand on the pump
-  rect(SKIN, 27, 30, 5, 2); rect(SKIN_D, 27, 32, 5, 1); rect(SKIN, 27, 33, 5, 2);
-  poly(SLEEVE, [46, 64, 64, 64, 64, 50, 52, 49]);                   // right sleeve
-  poly(SKIN, [37, 58, 43, 51, 52, 51, 55, 59, 47, 64, 37, 64]);     // right hand on the grip
-  rect(SKIN_D, 40, 57, 10, 1);
-});
-const FLASH = pixelCanvas(26, 22, (poly) => {
-  poly('#f83800', [13, 0, 17, 7, 26, 6, 19, 13, 23, 22, 13, 16, 3, 22, 7, 13, 0, 6, 9, 7]);
-  poly('#f8b800', [13, 4, 16, 9, 21, 9, 17, 13, 19, 18, 13, 15, 7, 18, 9, 13, 5, 9, 10, 9]);
-  poly('#fcfcdc', [13, 8, 15, 11, 13, 14, 11, 11]);
-});
+
+// ---------------------------------------------------------------- one weapon per skin
+// Each hero fights with their own weapon. Skins unlock as the level goes up, so later skins
+// carry stronger weapons, and the level adds +15% damage every 10 LV on top.
+//   tiros:   screen columns (from the crosshair) each shot hits: many = spread, one = precision
+//   dano:    damage per column hit · recarga: seconds between shots
+//   som:     sfx name · flash: muzzle flash colors (null = no flash, e.g. thrown weapons)
+//   mao:     [hand, hand shadow, sleeve] colors · art: the first-person drawing (64×64)
+// Damage per second on one target (dano × tiros ÷ recarga) grows with the skin's level:
+//   5.7  9.3  10  12.9  15  16.9  20  22.2  25  28.6  36.4  46.7
+const HUMAN = [SKIN, SKIN_D];
+const WEAPONS = {
+  worker: { nome: 'GRAMPEADOR', tiros: [0], dano: 2, recarga: .35, som: 'clack', flash: null, mao: [...HUMAN, '#2c2c5c'],
+    art(poly, rect, fist) {
+      rect('#3c3c3c', 26, 16, 12, 34);                              // base
+      rect('#d82800', 25, 10, 14, 26); rect('#fc7460', 26, 11, 1, 24); // red top arm
+      rect('#bcbcbc', 27, 5, 10, 6); rect('#3c3c3c', 30, 6, 4, 2);    // metal nose, staple slot
+      fist(32, 42);
+    } },
+  street: { nome: 'ESCOPETA', tiros: [-11, -7, -3, 0, 3, 7, 11], dano: 1, recarga: .75, som: 'shot', recuo: 10,
+    flash: ['#f83800', '#f8b800', '#fcfcdc'], mao: [...HUMAN, SLEEVE],
+    art(poly, rect) {
+      poly(SLEEVE, [0, 64, 18, 64, 29, 41, 21, 33, 0, 48]);            // left sleeve
+      rect(SLEEVE_D, 2, 52, 10, 2);
+      poly('#7c7c7c', [27, 46, 37, 46, 35, 6, 29, 6]);                  // barrel
+      rect('#bcbcbc', 31, 8, 1, 36);
+      rect('#3c3c3c', 29, 3, 6, 4);                                     // muzzle
+      poly('#3c3c3c', [24, 64, 40, 64, 38, 42, 26, 42]);                // receiver
+      rect('#5c5c5c', 28, 47, 8, 2);
+      poly('#ac7c00', [26, 39, 38, 39, 37, 26, 27, 26]);                // wooden pump
+      rect('#7c5000', 27, 29, 10, 1); rect('#7c5000', 27, 32, 10, 1); rect('#7c5000', 26, 35, 12, 1);
+      poly(SKIN, [17, 42, 28, 37, 31, 29, 27, 26, 20, 29, 15, 36]);     // left hand on the pump
+      rect(SKIN, 27, 30, 5, 2); rect(SKIN_D, 27, 32, 5, 1); rect(SKIN, 27, 33, 5, 2);
+      poly(SLEEVE, [46, 64, 64, 64, 64, 50, 52, 49]);                   // right sleeve
+      poly(SKIN, [37, 58, 43, 51, 52, 51, 55, 59, 47, 64, 37, 64]);     // right hand on the grip
+      rect(SKIN_D, 40, 57, 10, 1);
+    } },
+  knight: { nome: 'BESTA', tiros: [0], dano: 6, recarga: .6, som: 'twang', flash: null, mao: ['#9c9c9c', '#5c5c5c', '#5c5c5c'],
+    art(poly, rect, fist) {
+      rect('#7c5000', 29, 24, 6, 40); rect('#ac7c00', 30, 24, 1, 40);   // wooden stock
+      poly('#5c3c1c', [6, 30, 30, 22, 34, 22, 58, 30, 58, 33, 34, 26, 30, 26, 6, 33]); // bow arms
+      poly('#dcdcdc', [7, 32, 32, 36, 32, 37, 7, 33]); poly('#dcdcdc', [57, 32, 32, 36, 32, 37, 57, 33]); // string
+      rect('#bcbcbc', 31, 9, 2, 28);                                    // bolt
+      poly('#7c7c7c', [29, 11, 32, 3, 35, 11]);
+      fist(32, 46);
+    } },
+  mage: { nome: 'CAJADO', tiros: [-4, 0, 4], dano: 3, recarga: .7, som: 'zap',
+    flash: ['#8c3cfc', '#c888fc', '#fcfcfc'], mao: [...HUMAN, '#5c2c8c'],
+    art(poly, rect, fist) {
+      rect('#7c5000', 30, 16, 4, 48); rect('#ac7c00', 31, 16, 1, 48);   // staff
+      poly('#bcbcbc', [26, 18, 38, 18, 36, 14, 28, 14]);                // gem holder
+      poly('#6888fc', [32, 2, 38, 9, 32, 16, 26, 9]);                   // the gem
+      rect('#d8e0fc', 30, 6, 2, 3);
+      fist(32, 40);
+    } },
+  ninja: { nome: 'SHURIKEN', tiros: [-2, 2], dano: 3, recarga: .4, som: 'swish', flash: null, mao: [...HUMAN, '#1c1c1c'],
+    art(poly, rect, fist) {
+      poly('#9c9c9c', [32, 8, 35, 21, 48, 24, 35, 27, 32, 40, 29, 27, 16, 24, 29, 21]); // four-point star
+      poly('#dcdcdc', [32, 10, 33, 21, 31, 21]);
+      rect('#3c3c3c', 30, 22, 4, 4);
+      fist(32, 42);
+    } },
+  orc: { nome: 'MACHADO', tiros: [0], dano: 11, recarga: .65, som: 'swish', flash: null, mao: ['#58a838', '#2c6c1c', '#5c3c1c'],
+    art(poly, rect, fist) {
+      rect('#7c5000', 30, 12, 5, 52); rect('#ac7c00', 31, 12, 1, 52);   // handle
+      poly('#9c9c9c', [35, 8, 50, 3, 52, 23, 35, 19]);                  // blade
+      rect('#dcdcdc', 50, 5, 2, 17);                                    // sharp edge
+      poly('#7c7c7c', [30, 10, 23, 13, 30, 17]);                        // back spike
+      fist(33, 46);
+    } },
+  skeleton: { nome: 'ARCO', tiros: [-1, 1], dano: 5, recarga: .5, som: 'twang', flash: null, mao: ['#e8e8d0', '#9c9c84', '#2c2c2c'],
+    art(poly, rect, fist) {
+      poly('#e8e8d0', [6, 34, 30, 26, 34, 26, 58, 34, 58, 37, 34, 30, 30, 30, 6, 37]); // bone bow
+      rect('#e8e8d0', 3, 32, 5, 6); rect('#e8e8d0', 56, 32, 5, 6);      // bone knobs
+      poly('#bcbcbc', [7, 36, 32, 40, 32, 41, 7, 37]); poly('#bcbcbc', [57, 36, 32, 40, 32, 41, 57, 37]); // string
+      rect('#9c7c4c', 31, 8, 2, 36);                                    // arrow
+      poly('#e8e8d0', [29, 10, 32, 2, 35, 10]);
+      fist(32, 46);
+    } },
+  robot: { nome: 'BLASTER', tiros: [0], dano: 4, recarga: .18, som: 'zap',
+    flash: ['#0088fc', '#58d8fc', '#fcfcfc'], mao: ['#9cb0c0', '#5c6c7c', '#3c4c5c'],
+    art(poly, rect, fist) {
+      poly('#5c6c7c', [25, 24, 39, 24, 37, 52, 27, 52]);                // body
+      rect('#3c4c5c', 21, 30, 4, 12); rect('#3c4c5c', 39, 30, 4, 12);  // fins
+      rect('#9cb0c0', 29, 10, 6, 15);                                   // barrel
+      rect('#58d8fc', 29, 5, 6, 5);                                     // emitter
+      rect('#58d854', 31, 30, 2, 2); rect('#f83800', 31, 34, 2, 2);     // status lights
+      fist(32, 46);
+    } },
+  coffee: { nome: 'JATO CAFÉ', tiros: [-8, -4, 0, 4, 8], dano: 3, recarga: .6, som: 'splash',
+    flash: ['#7c3c1c', '#ac7c00', '#fcfcdc'], mao: ['#e8e8e8', '#a0a0a0', '#3c2c1c'],
+    art(poly, rect, fist) {
+      rect('#bcbcbc', 24, 26, 16, 30); rect('#e8e8e8', 26, 26, 2, 30);  // thermos
+      rect('#7c3c1c', 24, 36, 16, 6);                                   // coffee band
+      rect('#3c3c3c', 27, 18, 10, 8);                                   // cap
+      rect('#5c5c5c', 30, 8, 4, 10);                                    // nozzle
+      rect('#7c3c1c', 31, 4, 2, 4);                                     // a drop
+      fist(32, 46);
+    } },
+  hammerhead: { nome: 'ARPÃO', tiros: [0], dano: 20, recarga: .7, som: 'twang', flash: null, mao: ['#7c8c9c', '#4c5c6c', '#2c3c5c'],
+    art(poly, rect, fist) {
+      rect('#5c6c7c', 30, 12, 4, 52); rect('#9cb0c0', 31, 12, 1, 52);   // shaft
+      poly('#bcbcbc', [27, 16, 32, 1, 37, 16, 32, 12]);                 // head
+      poly('#9c9c9c', [27, 16, 24, 23, 30, 17]); poly('#9c9c9c', [37, 16, 40, 23, 34, 17]); // barbs
+      rect('#ac7c00', 28, 30, 8, 3);                                    // rope ring
+      fist(32, 40); fist(32, 54);
+    } },
+  unknown: { nome: 'GLITCH', tiros: [-10, -5, 0, 5, 10], dano: 4, recarga: .55, som: 'zap',
+    flash: ['#fc00fc', '#00fcfc', '#fcfcfc'], mao: ['#fcfcfc', '#7c7c7c', '#1c1c1c'],
+    art(poly, rect, fist) {
+      rect('#00fcfc', 26, 9, 12, 6); rect('#fc00fc', 30, 14, 8, 10);    // corrupted blocks
+      rect('#fcfcfc', 23, 22, 14, 4); rect('#00fcfc', 34, 26, 6, 12);
+      rect('#fc00fc', 25, 30, 8, 8); rect('#fcfcfc', 30, 3, 4, 6);
+      rect('#fc00fc', 40, 18, 3, 3); rect('#00fcfc', 20, 34, 3, 3);
+      fist(32, 44);
+    } },
+  cat: { nome: 'LASER', tiros: [-2, 0, 2], dano: 7, recarga: .45, som: 'zap',
+    flash: ['#f83800', '#fc5858', '#fcfcfc'], mao: ['#fcfcfc', '#bcbcbc', '#e0e0e0'],
+    art(poly, rect, fist) {
+      rect('#3c3c3c', 30, 14, 4, 34); rect('#7c7c7c', 31, 14, 1, 34);   // laser pointer
+      rect('#bcbcbc', 30, 10, 4, 4);
+      rect('#f83800', 31, 8, 2, 2);                                     // the red dot
+      rect('#f83800', 34, 24, 1, 3);                                    // button
+      fist(32, 42);
+      rect('#fc88a8', 27, 45, 3, 2); rect('#fc88a8', 31, 44, 3, 2); rect('#fc88a8', 35, 45, 3, 2); // paw beans
+    } },
+};
+// A fist closed around the weapon at (x, y), with its arm coming up from the bottom.
+function weaponArt(w) {
+  const [hand, handD, sleeve] = w.mao;
+  return pixelCanvas(64, 64, (poly, rect) => {
+    const fist = (x, y) => {
+      poly(sleeve, [x - 7, y + 9, x + 7, y + 9, x + 12, 64, x - 10, 64]);
+      rect(hand, x - 7, y, 14, 9); rect(hand, x - 9, y + 2, 3, 5);
+      rect(handD, x - 6, y + 3, 12, 1); rect(handD, x - 6, y + 6, 12, 1);
+    };
+    w.art(poly, rect, fist);
+  });
+}
+function flashArt([outer, inner, core]) {
+  return pixelCanvas(26, 22, (poly) => {
+    poly(outer, [13, 0, 17, 7, 26, 6, 19, 13, 23, 22, 13, 16, 3, 22, 7, 13, 0, 6, 9, 7]);
+    poly(inner, [13, 4, 16, 9, 21, 9, 17, 13, 19, 18, 13, 15, 7, 18, 9, 13, 5, 9, 10, 9]);
+    poly(core, [13, 8, 15, 11, 13, 14, 11, 11]);
+  });
+}
+const ART = {};
+// The weapon of the current hero, picked when the game opens.
+let wpn = WEAPONS.street;
+function pickWeapon() {
+  wpn = WEAPONS[api.getSkin ? api.getSkin() : 'street'] || WEAPONS.street;
+  const key = Object.keys(WEAPONS).find(k => WEAPONS[k] === wpn);
+  ART[key] = ART[key] || { gun: weaponArt(wpn), flash: wpn.flash && flashArt(wpn.flash) };
+  wpn.gun = ART[key].gun; wpn.flashImg = ART[key].flash;
+}
+// +15% damage every 10 levels.
+const levelBonus = () => 1 + Math.floor((api.getLevel ? api.getLevel() : 1) / 10) * .15;
+// Fast weapons burn through ammo faster, so ammo amounts scale with the fire rate:
+// every weapon gets about the same number of seconds of shooting as the shotgun.
+const ammo = n => Math.round(n * .75 / wpn.recarga);
 
 // ---------------------------------------------------------------- DOM
 let root, cv, cx, img, buf, zbuf, els;
@@ -224,7 +364,7 @@ function buildDOM() {
       <div class="ot-hud">
         <div class="ot-face"></div>
         <div class="ot-stat"><small>SAÚDE</small><b data-k="hp"></b></div>
-        <div class="ot-stat"><small>CARTUCHO</small><b data-k="ammo"></b></div>
+        <div class="ot-stat"><small data-k="wname">ARMA</small><b data-k="ammo"></b></div>
         <div class="ot-stat"><small>ONDA</small><b data-k="wave"></b></div>
         <div class="ot-stat"><small>ABATES</small><b data-k="kills"></b></div>
       </div>
@@ -241,11 +381,13 @@ function buildDOM() {
     face: root.querySelector('.ot-face'),
     hp: root.querySelector('[data-k=hp]'), ammo: root.querySelector('[data-k=ammo]'),
     wave: root.querySelector('[data-k=wave]'), kills: root.querySelector('[data-k=kills]'),
+    wname: root.querySelector('[data-k=wname]'),
   };
 }
 
 // ---------------------------------------------------------------- game state
-const MAX_HP = 100, MAX_AMMO = 60;
+const MAX_HP = 100;
+const maxAmmo = () => ammo(60);
 let g;          // the current run
 let mode;       // 'intro' | 'play' | 'pause' | 'dead'
 let menuSel = 0;
@@ -255,7 +397,7 @@ let raf = 0, last = 0;
 function newRun() {
   g = {
     x: START.x, y: START.y, a: START.a,
-    hp: MAX_HP, ammo: 24, wave: 0, kills: 0,
+    hp: MAX_HP, ammo: ammo(24), wave: 0, kills: 0,
     enemies: [], pickups: [], shots: [],
     cool: 0, fireT: 0, punchT: 0, recoil: 0, walk: 0, hurtT: 0, faceHurt: 0,
     betweenT: 1.2, flowT: 0, flow: new Int16Array(MW * MH),
@@ -317,7 +459,7 @@ function nextWave() {
   for (let i = 0; i < (n >= 3 ? Math.ceil((n - 2) / 2) : 0); i++) spawnEnemy('skull');
   spawnPickup('shells'); spawnPickup('shells');
   if (n % 2 === 0) spawnPickup('coffee');
-  g.ammo = Math.min(MAX_AMMO, g.ammo + 6);
+  g.ammo = Math.min(maxAmmo(), g.ammo + ammo(6));
   banner(`ONDA ${n}`, 'gold');
   api.sfx.start();
 }
@@ -413,8 +555,8 @@ function update(dt) {
   for (const p of g.pickups) {
     p.phase += dt * 3;
     if (Math.hypot(g.x - p.x, g.y - p.y) > .6) continue;
-    if (p.type === 'shells' && g.ammo < MAX_AMMO) {
-      g.ammo = Math.min(MAX_AMMO, g.ammo + 8); p.taken = true; banner('+8 CARTUCHOS'); api.sfx.pickup();
+    if (p.type === 'shells' && g.ammo < maxAmmo()) {
+      const n = ammo(8); g.ammo = Math.min(maxAmmo(), g.ammo + n); p.taken = true; banner(`+${n} MUNIÇÃO`); api.sfx.pickup();
     } else if (p.type === 'coffee' && g.hp < MAX_HP) {
       g.hp = Math.min(MAX_HP, g.hp + 25); p.taken = true; banner('CAFÉ! +25 SAÚDE', 'good'); api.sfx.pickup();
     }
@@ -451,7 +593,7 @@ function fire() {
   const dirX = Math.cos(g.a), dirY = Math.sin(g.a), planeX = -dirY * PLANE, planeY = dirX * PLANE;
   const live = g.enemies.filter(e => !e.dying);
   if (g.ammo <= 0) {
-    // Out of shells: CRIA throws a punch.
+    // Out of ammo: the hero throws a punch.
     g.cool = .45; g.punchT = .2; api.sfx.punch();
     let target = null, bd = 1.25;
     for (const e of live) {
@@ -460,21 +602,22 @@ function fire() {
       if (d < bd && ang < .6) { bd = d; target = e; }
     }
     if (target) damage(target, 3);
-    else banner('SEM CARTUCHOS!', 'bad');
+    else banner('SEM MUNIÇÃO!', 'bad');
     return;
   }
-  g.ammo--; g.cool = .75; g.fireT = .08; g.recoil = 10;
-  api.sfx.shot();
+  g.ammo--; g.cool = wpn.recarga; g.fireT = .08; g.recoil = wpn.recuo || 6;
+  (api.sfx[wpn.som] || api.sfx.shot)();
   // Seven pellets spread across the middle of the screen; each hits the nearest enemy in its column.
   const proj = live.map(e => ({ e, p: project(e, dirX, dirY, planeX, planeY) })).filter(o => o.p);
-  for (const off of [-11, -7, -3, 0, 3, 7, 11]) {
+  const dmg = wpn.dano * levelBonus();
+  for (const off of wpn.tiros) {
     const col = W / 2 + off;
     let hit = null, hd = 1e9;
     for (const { e, p } of proj) {
       const half = (K * e.k.s / p.depth) / 2;
       if (Math.abs(col - p.sx) <= half && p.depth < zbuf[col | 0] && p.depth < hd) { hd = p.depth; hit = e; }
     }
-    if (hit) damage(hit, 1);
+    if (hit) damage(hit, dmg);
   }
 }
 
@@ -591,8 +734,8 @@ function render() {
   const bobX = Math.sin(g.walk) * 4, bobY = Math.abs(Math.cos(g.walk)) * 3;
   const punch = g.punchT > 0 ? -14 : 0;
   const wx = W / 2 - 32 + 8 + bobX, wy = H - 60 + bobY + g.recoil + punch;
-  if (g.fireT > 0) cx.drawImage(FLASH, wx + 32 - 13, wy - 18);
-  cx.drawImage(WEAPON, wx | 0, wy | 0);
+  if (g.fireT > 0 && wpn.flashImg) cx.drawImage(wpn.flashImg, wx + 32 - 13, wy - 18);
+  cx.drawImage(wpn.gun, wx | 0, wy | 0);
 }
 
 // ---------------------------------------------------------------- HUD, banners, menus
@@ -627,6 +770,7 @@ function renderMenu() {
         <div class="ot-title">HORA EXTRA</div>
         <div class="ot-hero">${api.heroSVG()}</div>
         <p>O EXPEDIENTE ACABOU.<br>OS MONSTROS DAS QUESTS<br>TOMARAM O ESCRITÓRIO.</p>
+        <p class="ot-weapon">ARMA: ${wpn.nome}${levelBonus() > 1 ? ` · DANO +${Math.round((levelBonus() - 1) * 100)}%` : ""}</p>
         <p class="ot-keys"><i class="arw">↑↓</i> ANDAR · <i class="arw">←→</i> VIRAR<br>Z ATIRAR · X PAUSA</p>
         ${best ? `<p class="ot-best">RECORDE: ONDA ${best.wave} · ${best.kills} ABATES</p>` : ''}
         <p class="ot-press">Z COMEÇAR · X SAIR</p>
@@ -697,6 +841,7 @@ function onBlur() { clearKeys(); if (mode === 'play') { mode = 'pause'; menuSel 
 
 function open() {
   if (!root) buildDOM();
+  pickWeapon(); els.wname.textContent = wpn.nome;
   newRun(); hudKey = '';
   mode = 'intro'; menuSel = 0;
   clearKeys();
