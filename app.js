@@ -1605,6 +1605,13 @@ const arrowObserver = new MutationObserver(muts => muts.forEach(m => fixArrows(m
   fit();
 })();
 
+// ---------------------------------------------------------------- installable app
+// On the website, a service worker makes TaskQuest installable and lets it open offline.
+// Opened from the downloaded folder (file://) there is no service worker: nothing to do.
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
 // ---------------------------------------------------------------- boot
 renderTitle();
 render();

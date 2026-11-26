@@ -2,12 +2,23 @@
 
 *Your corporate journey.* Uma to-do list inspirada em games de NES: cada tarefa é uma **quest**, com dificuldade, prazo final e contagem regressiva. Você joga como num controle: direcional + Z + X.
 
-- **Jogar no navegador:** https://kiyosonoda.github.io/taskquest/
-- **Baixar para o Windows:** [TaskQuest.zip](https://github.com/kiyosonoda/taskquest/releases/latest/download/TaskQuest.zip)
+- **Jogar no navegador ou instalar como app (Mac, Windows):** https://kiyosonoda.github.io/taskquest/
+- **Baixar para o Windows (zip):** [TaskQuest.zip](https://github.com/kiyosonoda/taskquest/releases/latest/download/TaskQuest.zip)
 
 Tudo começa zerado para cada pessoa: o progresso fica salvo só no navegador de quem joga.
 
-## Instalar no Windows (10 ou 11)
+## Instalar como app pelo site (Mac e Windows)
+
+Abra https://kiyosonoda.github.io/taskquest/ e:
+
+- **Mac com Safari** (macOS 14 Sonoma ou mais novo): menu **Arquivo → Adicionar ao Dock**.
+- **Chrome ou Edge** (Mac ou Windows): clique no ícone de **Instalar** na barra de endereço.
+
+O TaskQuest vira um app com ícone próprio, abre numa janela sem barra do navegador, funciona sem internet e se atualiza sozinho quando sai uma versão nova.
+
+O app instalado pelo site e o zip guardam o progresso em lugares diferentes: quem troca um pelo outro começa do zero.
+
+## Instalar no Windows pelo zip (10 ou 11)
 
 1. Baixe o **TaskQuest.zip**, clique com o botão direito nele e escolha **"Extrair tudo..."** numa pasta onde ele vai ficar de vez.
 2. Dê dois cliques em **Instalar TaskQuest**. Se o Windows mostrar "O Windows protegeu o computador", clique em **Mais informações → Executar assim mesmo**.
@@ -61,4 +72,4 @@ Nenhuma outra tecla faz nada, exceto quando se digita um nome (aí o teclado dig
 
 ## Tecnologia
 
-HTML, CSS e JavaScript puros, sem dependências nem build. Basta abrir o `index.html`.
+HTML, CSS e JavaScript puros, sem dependências nem build. Basta abrir o `index.html`. No site, `manifest.webmanifest` e `sw.js` (service worker) tornam o jogo instalável e disponível offline.
